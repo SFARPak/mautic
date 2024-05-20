@@ -23,7 +23,7 @@ spec:
           configMap:
             name: phpini
       containers:
-      - image: mautic/mautic:latest
+      - image: mautic/mautic:v4-fpm
         name: mautic
         volumeMounts:
           - name: mautic-pvc
