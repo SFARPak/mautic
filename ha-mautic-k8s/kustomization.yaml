@@ -1,0 +1,9 @@
+resources:
+  - cm.yml
+  - hpa.yml
+  - ingress.yml
+  - mautic.yml
+  - mysql.yml
+  - pvc.yml
+  - redis.yml
+  - svc.yml

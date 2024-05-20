@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-mautic
+  labels:
+    app: mautic
+spec:
+  selector:
+    matchLabels:
+      app: mautic
+      tier: mysql-mautic
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mautic
+        tier: mysql-mautic
+    spec:
+      containers:
+      - name: mysql-mautic
+        image: mysql:latest
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-mautic-pass
+              key: password
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-mautic-user
+              key: username
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-mautic-user-password
+              key: userpassword
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mysql-mautic-database
+              key: databasename
+        ports:
+        - containerPort: 3306
+          name: mysql-mautic
+        volumeMounts:
+        - name: mysql-mautic-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-mautic-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-mautic-pv-claim
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-mautic-pv-claim
+  labels:
+    app: mysql-mautic
+spec:
+  storageClassName: longhorn
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-mautic-service
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: mautic
+    tier: mysql-mautic

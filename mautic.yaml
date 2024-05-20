@@ -1,0 +1,118 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mautic
+  labels:
+    app: mautic
+spec:
+  ports:
+    - port: 8000
+  selector:
+    app: mautic
+    tier: frontend
+  type: LoadBalancer
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: mautic-pvc
+# spec:
+#   storageClassName: longhorn
+#   accessModes:
+#     - ReadWriteMany
+#   resources:
+#     requests:
+#       storage: 5Gi
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: mautic
+  labels:
+    app: mautic
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: mautic
+      tier: frontend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mautic
+        tier: frontend
+    spec:
+      containers:
+      - name: mautic
+        image: mautic/mautic
+        imagePullPolicy: Always
+        env:
+        - name: MAUTIC_DB_HOST
+          value: '10.43.94.18'
+        - name: MYSQL_PORT
+          value: '3306'
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-mautic-pass
+              key: password
+        - name: MAUTIC_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-mautic-user
+              key: username
+        - name: MAUTIC_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-mautic-user-password
+              key: userpassword
+        - name: MAUTIC_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: mysql-mautic-database
+              key: databasename
+        - name: REDIS_HOST
+          value: redis-mautic-service
+        - name: MEMCACHED_HOST
+          value: memcached-service
+        ports:
+        - containerPort: 8000
+          name: mautic
+        - containerPort: 5432
+          name: postgres
+        volumeMounts:
+        - name: mautic-persistent-storage
+          mountPath: /home/user/public
+      imagePullSecrets:
+      - name: regcred
+      volumes:
+      - name: mautic-persistent-storage
+        persistentVolumeClaim:
+          claimName: mautic-pvc
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: default
+  name: mautic-tls-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - m.alitech.io
+      secretName: mautic-tls
+  rules:
+    - host: m.alitech.io
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: mautic
+                port:
+                  number: 8000

@@ -1,0 +1,19 @@
+secretGenerator:
+- name: mysql-mautic-pass
+  literals:
+  - password=5&T#0upcg96xYBz2u2
+- name: mysql-mautic-user
+  literals:
+  - username=mautic
+- name: mysql-mautic-user-password
+  literals:
+  - userpassword=5&T#0upcg96xYBz2u2
+- name: mysql-mautic-database
+  literals:
+  - databasename=mautic
+resources:
+  - mautic.yaml
+  - mautic-pvc.yaml
+  - mautic-mysql.yaml
+  - redis.yaml
+  - memcached.yaml
