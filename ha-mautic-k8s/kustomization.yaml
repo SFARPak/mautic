@@ -1,6 +1,6 @@
 resources:
   - cm.yml
-  - hpa.yml
+  # - hpa.yml
   - ingress.yml
   - mautic.yml
   - mysql.yml
