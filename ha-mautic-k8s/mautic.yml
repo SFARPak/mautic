@@ -5,7 +5,7 @@ metadata:
     app: mautic
   name: mautic
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: mautic
@@ -23,7 +23,7 @@ spec:
           configMap:
             name: phpini
       containers:
-      - image: mautic/mautic:v4
+      - image: skippednote/mautic4
         name: mautic
         volumeMounts:
           - name: mautic-pvc
